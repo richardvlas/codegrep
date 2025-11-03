@@ -5,14 +5,14 @@ from tree_sitter_language_pack import get_parser
 
 class TreeSitterCodeParser(ICodeParser):
 
-    def parse(self, code: str, langauge: str) -> Tree:
-        parser = self._resolve_code_parser(langauge)
-        tree = parser.parse(bytes(code, "utf8"))
+    def parse(self, code: str, language: str) -> Tree:
+        parser: Parser = self._resolve_code_parser(language=language)
+        tree: Tree = parser.parse(bytes(code, encoding="utf8"))
         return tree
 
     def _resolve_code_parser(self, language: str) -> Parser:
         try:
-            parser = get_parser(language)
+            parser: Parser = get_parser(language_name=language)
             return parser
         except LookupError as lue:
             raise ValueError(
@@ -36,6 +36,6 @@ class MachineConnector(ABC):
 
     parser = TreeSitterCodeParser()
     tree = parser.parse(code, "python")
-    print(tree)
-    print(tree.root_node)
-    print(tree.root_node.children)
+    print(f"Parsed tree: {tree}")
+    print(f"Root node: {tree.root_node}")
+    print(f"Root node children: {tree.root_node.children}")

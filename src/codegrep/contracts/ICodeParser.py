@@ -7,5 +7,5 @@ class ICodeParser(ABC):
     """Interface for parsing code into an abstract syntax tree (AST)."""
 
     @abstractmethod
-    def parse(self, code: str, langauge: str) -> Tree:
+    def parse(self, code: str, language: str) -> Tree:
         pass
