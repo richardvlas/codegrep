@@ -1,7 +1,5 @@
 from typing import Any, List, Set
 
-from contracts.ContextConfiguration import ContextConfiguration
-from contracts.DisplayConfiguration import DisplayConfiguration
 from contracts.SyntaxAnalysisResult import SyntaxAnalysisResult
 
 
@@ -16,14 +14,24 @@ class HierarchicalContextExtractor:
 
     def __init__(
         self,
-        context_config: ContextConfiguration,
-        display_config: DisplayConfiguration,
-    ):
-        if not context_config or not display_config:
-            raise ValueError("Context and display configurations must be provided.")
+        header_max: int = 10,
+        child_scopes: bool = True,
+        last_line: bool = True,
+        parent_scopes: bool = True,
+        loi_pad: int = 1,
+        show_top_scope: bool = True,
+        margin: int = 3,
+        verbose: bool = False,
+    ) -> None:
+        self._header_max_lines = header_max
+        self._include_child_context = child_scopes
+        self._include_last_line = last_line
+        self._include_parent_context = parent_scopes
+        self._line_of_interest_padding = loi_pad
+        self._show_top_of_file_parent_scope = show_top_scope
+        self._top_margin_lines = margin
+        self._verbose_mode = verbose
 
-        self._context_config = context_config
-        self._display_config = display_config
         self._processed_parent_scopes: Set[int] = set()
 
     # =====================================================================
@@ -51,30 +59,30 @@ class HierarchicalContextExtractor:
         lines_to_show = self._add_padding(lines_to_show, syntax_result)
 
         # Add the last line if configured
-        if self._context_config.include_last_line:
+        if self._include_last_line:
             last_line = len(syntax_result.scopes_by_line) - 1
             if last_line >= 0:
                 lines_to_show.add(last_line)
-                if self._context_config.include_parent_context:
+                if self._include_parent_context:
                     self._add_parent_context(last_line, syntax_result, lines_to_show)
 
         # Include parent and child scopes
-        if self._context_config.include_parent_context:
+        if self._include_parent_context:
             for line in lines_of_interest:
                 self._add_parent_context(line, syntax_result, lines_to_show)
 
-        if self._context_config.include_child_context:
+        if self._include_child_context:
             for line in lines_of_interest:
                 self._add_child_context(line, syntax_result, lines_to_show)
 
         # Add top-of-file margin
-        if self._display_config.top_margin_lines:
-            lines_to_show.update(range(self._display_config.top_margin_lines))
+        if self._top_margin_lines:
+            lines_to_show.update(range(self._top_margin_lines))
 
         # Close small one-line gaps
         lines_to_show = self._close_gaps(lines_to_show)
 
-        if self._context_config.verbose_mode:
+        if self._verbose_mode:
             print(f"[ContextExtractor] Lines of interest: {sorted(lines_of_interest)}")
             print(f"[ContextExtractor] Final lines to show: {sorted(lines_to_show)}")
 
@@ -91,7 +99,7 @@ class HierarchicalContextExtractor:
     ) -> Set[int]:
         """Add configurable padding around each line of interest."""
         padded = set(lines)
-        padding = self._display_config.line_of_interest_padding
+        padding = self._line_of_interest_padding
         total_lines = len(syntax_result.scopes_by_line)
 
         for line in list(lines):
@@ -124,10 +132,10 @@ class HierarchicalContextExtractor:
                 head_start = header.scope_start_line
                 head_end = min(
                     header.scope_end_line,
-                    head_start + self._display_config.header_max_lines,
+                    head_start + self._header_max_lines,
                 )
 
-                if head_start > 0 or self._display_config.show_top_of_file_parent_scope:
+                if head_start > 0 or self._show_top_of_file_parent_scope:
                     lines_to_show.update(range(head_start, head_end + 1))
 
     def _add_child_context(

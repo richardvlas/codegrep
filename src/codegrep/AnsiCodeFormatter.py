@@ -1,7 +1,6 @@
 from typing import List, Set
 
 from contracts.CodeLine import CodeLine
-from contracts.DisplayConfiguration import DisplayConfiguration
 
 
 class AnsiCodeFormatter:
@@ -13,10 +12,15 @@ class AnsiCodeFormatter:
     - Optionally highlights matches and adds ellipses for skipped lines
     """
 
-    def __init__(self, display_config: DisplayConfiguration):
-        if not display_config:
-            raise ValueError("DisplayConfiguration must be provided.")
-        self._display_config = display_config
+    def __init__(
+        self,
+        colors: bool = False,
+        line_numbers: bool = False,
+        mark_lois: bool = True,
+    ):
+        self._use_color = colors
+        self._show_line_numbers = line_numbers
+        self._mark_lines_of_interest = mark_lois
 
     # =====================================================================
     # Public API
@@ -33,7 +37,7 @@ class AnsiCodeFormatter:
         output_lines: List[str] = []
         last_shown = -2  # Tracks previous line to decide when to insert "⋮"
 
-        if self._display_config.use_color:
+        if self._use_color:
             output_lines.append("\033[0m")  # Reset ANSI state at start
 
         for line_index in lines_to_show_sorted:
@@ -43,7 +47,7 @@ class AnsiCodeFormatter:
             # Add ellipsis (⋮) between non-contiguous lines
             if line_index > last_shown + 1:
                 gap_marker = "⋮"
-                if self._display_config.show_line_numbers:
+                if self._show_line_numbers:
                     output_lines.append(f"   {gap_marker}")
                 else:
                     output_lines.append(gap_marker)
@@ -53,7 +57,7 @@ class AnsiCodeFormatter:
             last_shown = line_index
 
         # Reset color at the end (safe for terminal output)
-        if self._display_config.use_color:
+        if self._use_color:
             output_lines.append("\033[0m")
 
         return "\n".join(output_lines)
@@ -73,7 +77,7 @@ class AnsiCodeFormatter:
         formatted_line = f"{marker} {content}"
 
         # Optionally add line numbers
-        if self._display_config.show_line_numbers:
+        if self._show_line_numbers:
             formatted_line = f"{code_line.line_number + 1:3} {formatted_line}"
 
         return formatted_line
@@ -82,9 +86,11 @@ class AnsiCodeFormatter:
         """
         Determine the left-side marker (e.g., █ for lines of interest or │ otherwise).
         """
-        if code_line.is_of_interest and self._display_config.mark_lines_of_interest:
+        # TODO: is mark_lines_of_interest needed here? Should it always mark lines
+        # of interest if is_of_interest is set?
+        if code_line.is_of_interest and self._mark_lines_of_interest:
             marker = "█"
-            if self._display_config.use_color:
+            if self._use_color:
                 # Red for lines of interest
                 return f"\033[31m{marker}\033[0m"
             return marker

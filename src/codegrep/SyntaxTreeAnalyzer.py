@@ -32,9 +32,8 @@ class SyntaxTreeAnalyzer(ISyntaxTreeAnalyzer):
             ast_nodes_by_line,
         )
 
-        print(f"Scopes by line: {scopes_by_line}")
-        print(f"Scope headers: {scope_headers}")
-        # print(f"AST nodes by line: {ast_nodes_by_line}")
+        # print(f"Scopes by line: {scopes_by_line}")
+        # print(f"Scope headers: {scope_headers}")
 
         return SyntaxAnalysisResult(
             scopes_by_line=scopes_by_line,
@@ -52,8 +51,8 @@ class SyntaxTreeAnalyzer(ISyntaxTreeAnalyzer):
         ast_nodes_by_line: List[List[Any]],
     ) -> tuple[int, int]:
         # just test
-        print(f"node.start_point = {node.start_point}")
-        print(f"node.end_point = {node.end_point}")
+        # print(f"node.start_point = {node.start_point}")
+        # print(f"node.end_point = {node.end_point}")
 
         start_line = node.start_point[0]
         end_line = node.end_point[0]
