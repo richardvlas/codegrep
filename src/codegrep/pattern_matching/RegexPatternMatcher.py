@@ -35,29 +35,3 @@ class RegexPatternMatcher(IPatternMatcher):
             if spans:
                 matches.append(LineMatch(line_number=i, spans=spans))
         return matches
-
-    def highlight(
-        self, text: str, pattern: str, ignore_case: bool, use_color: bool = True
-    ) -> str:
-        """Highlight all occurrences of pattern in text.
-
-        Args:
-            text (str): The text to highlight matches in.
-            pattern (str): The regex pattern to match.
-            ignore_case (bool): Whether to ignore case when matching.
-            use_color (bool): Whether to use ANSI color codes for highlighting.
-
-        Returns:
-            str: The text with highlighted matches (using ANSI codes if use_color=True).
-        """
-        flags = re.IGNORECASE if ignore_case else 0
-
-        if use_color:
-            # Red background with white text for highlighted matches
-            def replace_func(match: re.Match[str]) -> str:
-                return f"\033[41m\033[37m{match.group(0)}\033[0m"
-
-            return re.sub(pattern, replace_func, text, flags=flags)
-        else:
-            # No color, just return original text
-            return text

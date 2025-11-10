@@ -4,12 +4,13 @@ from AnsiCodeFormatter import AnsiCodeFormatter
 from config.config import Config
 from contracts.CodeLine import CodeLine
 from contracts.SyntaxAnalysisResult import SyntaxAnalysisResult
+from formating.contracts.ISpanHighlighter import ISpanHighlighter
 from formating.SpanHighlighter import SpanHighlighter
 from HierarchicalContextExtractor import HierarchicalContextExtractor
 from language_detection.LanguageCode import LanguageCode
 from language_detection.LanguageCodeDetector import LanguageCodeDetector
+from pattern_matching.contracts.IPatternMatcher import IPatternMatcher
 from pattern_matching.contracts.models import PatternMatchResult
-from pattern_matching.RegexPatternMatcher import RegexPatternMatcher
 from SyntaxTreeAnalyzer import SyntaxTreeAnalyzer
 from TreeSitterCodeParser import TreeSitterCodeParser
 
@@ -39,8 +40,6 @@ class CodeContextAnalyzer:
         # Mostly useful for CodeParser and CodeFormatter?
         #
         self._code_parser = TreeSitterCodeParser()
-        self._pattern_matcher = RegexPatternMatcher()
-        self._span_highlighter = SpanHighlighter()
         self._syntax_tree_analyzer = SyntaxTreeAnalyzer(verbose=self._config.verbose)
         self._context_extractor = HierarchicalContextExtractor(
             header_max=self._config.header_max,
@@ -52,17 +51,17 @@ class CodeContextAnalyzer:
             margin=self._config.margin,
             verbose=self._config.verbose,
         )
-        self._code_formatter = AnsiCodeFormatter(
-            colors=self._config.colors,
-            line_numbers=self._config.line_numbers,
-            mark_lois=self._config.mark_lois,
-        )
+        # self._code_formatter = AnsiCodeFormatter(
+        #     colors=self._config.colors,
+        #     line_numbers=self._config.line_numbers,
+        #     mark_lois=self._config.mark_lois,
+        # )
 
         self._highlight_spans: dict[int, list[tuple[int, int]]] = {}
         self._syntax_tree_analysis_result: SyntaxAnalysisResult | None = None
 
     def grep(self, search_pattern: str, ignore_case: bool = False) -> Set[int]:
-        self._ensure_is_analyzed()
+        self._ensure_ready()
 
         result: PatternMatchResult = self._pattern_matcher.match(
             search_pattern, self._lines, ignore_case
@@ -91,10 +90,6 @@ class CodeContextAnalyzer:
             )
         return self._format_output()
 
-    def _ensure_is_analyzed(self) -> None:
-        if self._syntax_tree_analysis_result is None:
-            self._analyze_syntax_tree()
-
     def _apply_highlighting(self) -> None:
         """Internal. Apply syntax highlighting to matched lines."""
         for i, code_line in enumerate(self._code_lines):
@@ -121,27 +116,44 @@ class CodeContextAnalyzer:
             code_lines=self._code_lines,
         )
 
-    def _analyze_syntax_tree(self) -> None:
-
+    def _resolve_dependencies(self) -> None:
         config = self._config
-        if not config.loaded:
+        if not self._config.loaded:
             config.load()
 
-        self._language_detector: LanguageCodeDetector = config.language_detector_class()
+            # TODO: replace the type with interface that allows custom language detectors
+            self._language_detector: LanguageCodeDetector = (
+                config.language_detector_class()
+            )
+            self._pattern_matcher: IPatternMatcher = config.pattern_matcher_class()
+            # self._span_highlighter: ISpanHighlighter = SpanHighlighter(config)
+            self._span_highlighter: ISpanHighlighter = config.span_highlighter_class(
+                config=config
+            )
+            self._code_formatter = AnsiCodeFormatter(config=config)
 
+    def _ensure_is_analyzed(self) -> None:
+        if self._syntax_tree_analysis_result is None:
+            self._perform_syntax_tree_analysis()
+
+    def _ensure_ready(self) -> None:
+        self._resolve_dependencies()
+        self._ensure_is_analyzed()
+
+    def _perform_syntax_tree_analysis(self) -> None:
         language_code: LanguageCode = self._language_detector.detect_language(
-            filename=config.filename
+            filename=self._config.filename
         )
         if language_code == LanguageCode.UNKNOWN:
-            raise ValueError(f"Could not detect language for file: {config.filename}")
+            raise ValueError(
+                f"Could not detect language for file: {self._config.filename}"
+            )
         self._language: LanguageCode = language_code
 
         # TODO: move to appropriate place
-        code = config.code.strip()
+        code = self._config.code.strip()
 
         self._lines: list[str] = code.splitlines()
-        print(f"Total lines of code: {len(self._lines)}")
-
         self._code_lines: list[CodeLine] = [
             CodeLine(line_number=i, content=line) for i, line in enumerate(self._lines)
         ]
@@ -150,7 +162,6 @@ class CodeContextAnalyzer:
         self._syntax_tree = self._code_parser.parse(
             code=code, language=self._language.value
         )
-
         self._syntax_tree_analysis_result = self._syntax_tree_analyzer.analyze(
             self._syntax_tree.root_node, self._lines
         )
@@ -177,6 +188,7 @@ if __name__ == "__main__":
         filename=FILE_NAME,
         code=code,
         colors=True,
+        color="red",
         line_numbers=True,
         parent_scopes=True,
         child_scopes=True,
@@ -187,7 +199,7 @@ if __name__ == "__main__":
         last_line=True,
         language_detector="language_detection.MockLanguageCodeDetector:MockLanguageCodeDetector",
         # language_detector=MockLanguageCodeDetector,
-        # language_detector=MockLanguageCodeDetector,
+        # pattern_matcher="pattern_matching.RegexPatternMatcher:RegexPatternMatcher",
     )
 
     analyzer = CodeContextAnalyzer(config=config)
