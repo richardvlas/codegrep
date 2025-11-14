@@ -31,22 +31,20 @@ Install using `pip`:
 $ pip install codegrep
 ```
 
+Note: In progress - PyPI package will be available soon.
+
 ## CLI Usage
 
 The `codegrep` command line tool is the quickest way to search a file or directory.
 
 ```
-Usage: codegrep [OPTIONS] FILENAME SEARCH_PATTERN
+Usage: codegrep [OPTIONS] SEARCH_PATTERN FILENAMES
 
 Options:
 	--ignore-case               Perform case-insensitive matching.
 	--colors                    Enable ANSI color highlighting.
 	--color TEXT                Pick the highlight color (default: red).
 	--line-numbers              Show 1-based line numbers alongside matches.
-	--parent-scopes             Include parent scopes in the output.
-	--child-scopes              Include child scopes in the output.
-	--margin INTEGER            Number of padding lines around matches (default: 3).
-	--help                      Show this message and exit.
 ```
 
 ## Library Usage
