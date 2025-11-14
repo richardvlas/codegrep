@@ -7,12 +7,12 @@ class Config:
         color: str = "red",
         verbose: bool = False,
         line_numbers: bool = False,
-        parent_scopes: bool = False,  # called parent_context: bool = False
-        child_scopes: bool = False,  # called child_context: bool = False
+        parent_scopes: bool = True,  # called parent_context: bool = False
+        child_scopes: bool = True,  # called child_context: bool = False
         last_line: bool = True,
         margin: int = 3,
         mark_lois: bool = True,
-        header_max: int = 10,  # max number of header lines to show
+        header_max: int = 5,  # max number of header lines to show
         show_top_scope: bool = True,
         loi_pad: int = 1,
     ) -> None:

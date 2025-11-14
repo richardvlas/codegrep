@@ -15,15 +15,6 @@ from .SyntaxTreeAnalyzer import SyntaxTreeAnalyzer
 
 
 class CodeContextAnalyzer:
-    """
-    High-level orchestrator for code analysis and formatting.
-    Automatically constructs all dependencies internally.
-
-    Users simply instantiate and use it:
-        analyzer = CodeContextAnalyzer(config)
-        analyzer.grep("def ")
-    """
-
     def __init__(
         self,
         config: Config,

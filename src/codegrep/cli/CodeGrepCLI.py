@@ -123,7 +123,6 @@ class CodeGrepCLI:
             color=args.color,
             verbose=args.verbose,
             line_numbers=args.line_numbers,
-            last_line=True,
         )
         application = Application(config=config)
         try:
