@@ -1,8 +1,8 @@
 from typing import Any, List
 
-from contracts.ISyntaxTreeAnalyzer import ISyntaxTreeAnalyzer
-from contracts.ScopeHeader import ScopeHeader
-from contracts.SyntaxAnalysisResult import SyntaxAnalysisResult
+from codegrep.contracts.ISyntaxTreeAnalyzer import ISyntaxTreeAnalyzer
+from codegrep.contracts.ScopeHeader import ScopeHeader
+from codegrep.contracts.SyntaxAnalysisResult import SyntaxAnalysisResult
 
 
 class SyntaxTreeAnalyzer(ISyntaxTreeAnalyzer):
@@ -12,13 +12,12 @@ class SyntaxTreeAnalyzer(ISyntaxTreeAnalyzer):
 
     def analyze(self, root_node: Any, lines: List[str]) -> SyntaxAnalysisResult:
         num_lines = len(lines)
-        print(f"Number of lines to analyze: {num_lines}")
         scopes_by_line: List[set[int]] = [set() for _ in range(num_lines)]
         scope_headers: List[List[ScopeHeader]] = [[] for _ in range(num_lines)]
         ast_nodes_by_line: List[List[Any]] = [[] for _ in range(num_lines)]
 
-        for i, line in enumerate(lines):
-            print(f"{i}: {line}")
+        # for i, line in enumerate(lines):
+        #     print(f"{i}: {line}")
 
         if self._verbose:
             print(f"Analyzing {len(lines)} lines...")
@@ -50,10 +49,6 @@ class SyntaxTreeAnalyzer(ISyntaxTreeAnalyzer):
         scope_headers: List[List[ScopeHeader]],
         ast_nodes_by_line: List[List[Any]],
     ) -> tuple[int, int]:
-        # just test
-        # print(f"node.start_point = {node.start_point}")
-        # print(f"node.end_point = {node.end_point}")
-
         start_line = node.start_point[0]
         end_line = node.end_point[0]
         size = end_line - start_line

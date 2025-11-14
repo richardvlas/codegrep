@@ -1,24 +1,3 @@
-from config.importer import import_from_string
-from formating.contracts.ISpanHighlighter import ISpanHighlighter
-from language_detection.LanguageCodeDetector import LanguageCodeDetector
-from pattern_matching.contracts.IPatternMatcher import IPatternMatcher
-
-LANGUAGE_DETECTORS: dict[str, str] = {
-    "default": "language_detection.LanguageCodeDetector:LanguageCodeDetector",
-    # "none": None,
-}
-
-PATTERN_MATCHERS: dict[str, str] = {
-    "default": "pattern_matching.RegexPatternMatcher:RegexPatternMatcher",
-    # "none": None,
-}
-
-SPAN_HIGHLIGHTERS: dict[str, str] = {
-    "default": "formating.SpanHighlighter:SpanHighlighter",
-    # "none": None,
-}
-
-
 class Config:
     def __init__(
         self,
@@ -36,10 +15,6 @@ class Config:
         header_max: int = 10,  # max number of header lines to show
         show_top_scope: bool = True,
         loi_pad: int = 1,
-        # TODO: change to interface that allows custom language detectors
-        language_detector: type[LanguageCodeDetector] | str = "default",
-        pattern_matcher: IPatternMatcher | str = "default",
-        span_highlighter: ISpanHighlighter | str = "default",
     ) -> None:
         self.filename = filename
         self.code = code
@@ -58,46 +33,7 @@ class Config:
         self.mark_lois = mark_lois
         # header_max_lines
         self.header_max = header_max
-        # line_of_interest_padding
-        self.loi_pad = loi_pad
         # show_top_of_file_parent_scope
         self.show_top_scope = show_top_scope
-
-        self.language_detector = language_detector
-        self.pattern_matcher = pattern_matcher
-        self.span_highlighter: ISpanHighlighter | str = span_highlighter
-
-        self.loaded = False
-
-    def load(self) -> None:
-        """Load or reload configuration if needed."""
-        if not self.loaded:
-
-            if isinstance(self.language_detector, str):
-                print(f"Loading language detector: {self.language_detector}")
-                language_detector_class = import_from_string(
-                    LANGUAGE_DETECTORS.get(
-                        self.language_detector, self.language_detector
-                    )
-                )
-                self.language_detector_class = language_detector_class
-            else:
-                self.language_detector_class = self.language_detector
-
-            if isinstance(self.pattern_matcher, str):
-                pattern_matcher_class = import_from_string(
-                    PATTERN_MATCHERS.get(self.pattern_matcher, self.pattern_matcher)
-                )
-                self.pattern_matcher_class = pattern_matcher_class
-            else:
-                self.pattern_matcher_class = self.pattern_matcher
-
-            if isinstance(self.span_highlighter, str):
-                span_highlighter_class = import_from_string(
-                    SPAN_HIGHLIGHTERS.get(self.span_highlighter, self.span_highlighter)
-                )
-                self.span_highlighter_class = span_highlighter_class
-            else:
-                self.span_highlighter_class = self.span_highlighter
-
-            self.loaded = True
+        # line_of_interest_padding
+        self.loi_pad = loi_pad

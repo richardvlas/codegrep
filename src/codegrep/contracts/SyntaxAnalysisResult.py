@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, List, Set
 
-from contracts.ScopeHeader import ScopeHeader
+from codegrep.contracts.ScopeHeader import ScopeHeader
 
 
 @dataclass

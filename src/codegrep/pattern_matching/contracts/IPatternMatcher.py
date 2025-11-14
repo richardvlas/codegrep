@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from pattern_matching.contracts.models import PatternMatchResult
+from codegrep.pattern_matching.contracts.models import PatternMatchResult
 
 
 class IPatternMatcher(ABC):

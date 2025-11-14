@@ -1,22 +1,14 @@
-from config.config import Config
-from formating.contracts.color_codes import AnsiBackground
-from formating.contracts.ISpanHighlighter import ISpanHighlighter
-from pattern_matching.contracts.models import MatchSpan
+from codegrep.config.config import Config
+from codegrep.formating.contracts.color_codes import AnsiBackground
+from codegrep.formating.contracts.ISpanHighlighter import ISpanHighlighter
+from codegrep.pattern_matching.contracts.models import MatchSpan
 
 
 class SpanHighlighter(ISpanHighlighter):
     def __init__(self, config: Config) -> None:
-        self._config = config
+        self._config: Config = config
 
     def highlight(self, text: str, spans: list[MatchSpan]) -> str:
-        """Highlight specified spans in the given text using ANSI color codes.
-
-        Args:
-            text (str): The text to highlight spans in.
-            spans (list[MatchSpan]): The list of spans to highlight.
-        Returns:
-            str: The text with highlighted spans.
-        """
         highlighted_text = text
         color_code = AnsiBackground.from_name(self._config.color).value
 

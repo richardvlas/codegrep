@@ -1,6 +1,6 @@
 from typing import Any, List, Set
 
-from contracts.SyntaxAnalysisResult import SyntaxAnalysisResult
+from codegrep.contracts.SyntaxAnalysisResult import SyntaxAnalysisResult
 
 
 class HierarchicalContextExtractor:
@@ -33,10 +33,6 @@ class HierarchicalContextExtractor:
         self._verbose_mode = verbose
 
         self._processed_parent_scopes: Set[int] = set()
-
-    # =====================================================================
-    # Public API
-    # =====================================================================
 
     def extract_context(
         self,
@@ -87,10 +83,6 @@ class HierarchicalContextExtractor:
             print(f"[ContextExtractor] Final lines to show: {sorted(lines_to_show)}")
 
         return lines_to_show
-
-    # =====================================================================
-    # Internal helpers
-    # =====================================================================
 
     def _add_padding(
         self,

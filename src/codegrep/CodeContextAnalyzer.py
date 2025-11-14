@@ -1,18 +1,17 @@
 from typing import Set
 
-from AnsiCodeFormatter import AnsiCodeFormatter
-from config.config import Config
-from contracts.CodeLine import CodeLine
-from contracts.SyntaxAnalysisResult import SyntaxAnalysisResult
-from formating.contracts.ISpanHighlighter import ISpanHighlighter
-from formating.SpanHighlighter import SpanHighlighter
-from HierarchicalContextExtractor import HierarchicalContextExtractor
-from language_detection.LanguageCode import LanguageCode
-from language_detection.LanguageCodeDetector import LanguageCodeDetector
-from pattern_matching.contracts.IPatternMatcher import IPatternMatcher
-from pattern_matching.contracts.models import PatternMatchResult
-from SyntaxTreeAnalyzer import SyntaxTreeAnalyzer
-from TreeSitterCodeParser import TreeSitterCodeParser
+from .AnsiCodeFormatter import AnsiCodeFormatter
+from .config.config import Config
+from .contracts.CodeLine import CodeLine
+from .contracts.ICodeParser import ICodeParser
+from .contracts.SyntaxAnalysisResult import SyntaxAnalysisResult
+from .formating.contracts.ISpanHighlighter import ISpanHighlighter
+from .HierarchicalContextExtractor import HierarchicalContextExtractor
+from .language_detection.LanguageCode import LanguageCode
+from .language_detection.LanguageCodeDetector import LanguageCodeDetector
+from .pattern_matching.contracts.IPatternMatcher import IPatternMatcher
+from .pattern_matching.contracts.models import PatternMatchResult
+from .SyntaxTreeAnalyzer import SyntaxTreeAnalyzer
 
 
 class CodeContextAnalyzer:
@@ -21,25 +20,26 @@ class CodeContextAnalyzer:
     Automatically constructs all dependencies internally.
 
     Users simply instantiate and use it:
-        analyzer = CodeContextAnalyzer("file.py", code)
+        analyzer = CodeContextAnalyzer(config)
         analyzer.grep("def ")
-        analyzer.add_context()
-        print(analyzer.format())
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(
+        self,
+        config: Config,
+        language_detector: LanguageCodeDetector,
+        code_parser: ICodeParser,
+        pattern_matcher: IPatternMatcher,
+        span_highlighter: ISpanHighlighter,
+        code_formatter: AnsiCodeFormatter,
+    ) -> None:
         self._config = config
-        # Trim leading/trailing whitespace from the code to ensure accurate line
-        # handling via TreeSitter
-        # self._code = code.strip()
+        self._language_detector = language_detector
+        self._code_parser = code_parser
+        self._pattern_matcher = pattern_matcher
+        self._span_highlighter = span_highlighter
+        self._code_formatter = code_formatter
 
-        # This was moved to config and _language_detector is created in _analyze_syntax_tree
-        # self._language_detector = LanguageCodeDetector()
-        # _language_detector should be function rather than class instance?
-        # TODO: do the same with the other components?
-        # Mostly useful for CodeParser and CodeFormatter?
-        #
-        self._code_parser = TreeSitterCodeParser()
         self._syntax_tree_analyzer = SyntaxTreeAnalyzer(verbose=self._config.verbose)
         self._context_extractor = HierarchicalContextExtractor(
             header_max=self._config.header_max,
@@ -51,24 +51,18 @@ class CodeContextAnalyzer:
             margin=self._config.margin,
             verbose=self._config.verbose,
         )
-        # self._code_formatter = AnsiCodeFormatter(
-        #     colors=self._config.colors,
-        #     line_numbers=self._config.line_numbers,
-        #     mark_lois=self._config.mark_lois,
-        # )
 
         self._highlight_spans: dict[int, list[tuple[int, int]]] = {}
         self._syntax_tree_analysis_result: SyntaxAnalysisResult | None = None
 
     def grep(self, search_pattern: str, ignore_case: bool = False) -> Set[int]:
-        self._ensure_ready()
+        self._ensure_is_analyzed()
 
         result: PatternMatchResult = self._pattern_matcher.match(
             search_pattern, self._lines, ignore_case
         )
 
         matched_line_numbers = {m.line_number for m in result.matches}
-        print(f"Matched lines: {matched_line_numbers}")
 
         self._lines_of_interest = matched_line_numbers
 
@@ -116,29 +110,9 @@ class CodeContextAnalyzer:
             code_lines=self._code_lines,
         )
 
-    def _resolve_dependencies(self) -> None:
-        config = self._config
-        if not self._config.loaded:
-            config.load()
-
-            # TODO: replace the type with interface that allows custom language detectors
-            self._language_detector: LanguageCodeDetector = (
-                config.language_detector_class()
-            )
-            self._pattern_matcher: IPatternMatcher = config.pattern_matcher_class()
-            # self._span_highlighter: ISpanHighlighter = SpanHighlighter(config)
-            self._span_highlighter: ISpanHighlighter = config.span_highlighter_class(
-                config=config
-            )
-            self._code_formatter = AnsiCodeFormatter(config=config)
-
     def _ensure_is_analyzed(self) -> None:
         if self._syntax_tree_analysis_result is None:
             self._perform_syntax_tree_analysis()
-
-    def _ensure_ready(self) -> None:
-        self._resolve_dependencies()
-        self._ensure_is_analyzed()
 
     def _perform_syntax_tree_analysis(self) -> None:
         language_code: LanguageCode = self._language_detector.detect_language(
@@ -165,70 +139,3 @@ class CodeContextAnalyzer:
         self._syntax_tree_analysis_result = self._syntax_tree_analyzer.analyze(
             self._syntax_tree.root_node, self._lines
         )
-
-
-if __name__ == "__main__":
-
-    import time
-
-    # TODO: move somewhere else to top: - This works on cmd but not gitbash
-    import colorama
-    from language_detection.MockLanguageCodeDetector import MockLanguageCodeDetector
-
-    colorama.init()
-
-    # Read code from a file
-    FILE_NAME = "src/codegrep/code_sample.py"
-    with open(FILE_NAME, "r") as file:
-        code = file.read()
-
-    print(code)
-
-    config = Config(
-        filename=FILE_NAME,
-        code=code,
-        colors=True,
-        color="red",
-        line_numbers=True,
-        parent_scopes=True,
-        child_scopes=True,
-        show_top_scope=True,
-        margin=3,
-        header_max=0,
-        loi_pad=1,
-        last_line=True,
-        language_detector="language_detection.MockLanguageCodeDetector:MockLanguageCodeDetector",
-        # language_detector=MockLanguageCodeDetector,
-        # pattern_matcher="pattern_matching.RegexPatternMatcher:RegexPatternMatcher",
-    )
-
-    analyzer = CodeContextAnalyzer(config=config)
-
-    SEARCH_PATTERN = "MAX_TITLE_LENGTH"
-
-    start_time = time.time()
-    lines_of_interest = analyzer.grep(SEARCH_PATTERN)
-    end_time = time.time()
-    print(f"Lines of interest: {sorted(lines_of_interest)}")
-    print(f"Time taken for grep: {end_time - start_time:.4f} seconds")
-
-    # Check for second time to test caching
-    start_time = time.time()
-    lines_of_interest = analyzer.grep(SEARCH_PATTERN)
-    end_time = time.time()
-    print(f"Lines of interest: {sorted(lines_of_interest)}")
-    print(f"Time taken for grep (2nd run): {end_time - start_time:.4f} seconds")
-
-    # Debug: Check if highlighting was applied
-    for line_idx in lines_of_interest:
-        line = analyzer._code_lines[line_idx]
-        print("-" * 40)
-        print(f"Line {line_idx}:")
-        print(f"  Content: {repr(line.content)}")
-        print(f"  Highlighted: {repr(line.highlighted_content)}")
-        print(f"  Is of interest: {line.is_of_interest}")
-        print("-" * 40)
-
-    formatted_output = analyzer.get_formatted_output()
-    print("Formatted Output:")
-    print(formatted_output)

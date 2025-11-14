@@ -1,8 +1,8 @@
 from typing import List, Set
 
-from config.config import Config
-from contracts.CodeLine import CodeLine
-from formating.contracts.color_codes import AnsiForeground
+from codegrep.config.config import Config
+from codegrep.contracts.CodeLine import CodeLine
+from codegrep.formating.contracts.color_codes import AnsiForeground
 
 
 class AnsiCodeFormatter:
@@ -53,10 +53,6 @@ class AnsiCodeFormatter:
             output_lines.append(AnsiForeground.RESET.value)
 
         return "\n".join(output_lines)
-
-    # =====================================================================
-    # Internal helpers
-    # =====================================================================
 
     def _format_single_line(self, code_line: CodeLine) -> str:
         """

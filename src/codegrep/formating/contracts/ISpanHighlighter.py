@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from pattern_matching.contracts.models import MatchSpan
+from codegrep.pattern_matching.contracts.models import MatchSpan
 
 
 class ISpanHighlighter(ABC):

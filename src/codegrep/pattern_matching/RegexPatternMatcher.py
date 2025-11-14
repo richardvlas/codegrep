@@ -1,7 +1,11 @@
 import re
 
-from pattern_matching.contracts.IPatternMatcher import IPatternMatcher
-from pattern_matching.contracts.models import LineMatch, MatchSpan, PatternMatchResult
+from codegrep.pattern_matching.contracts.IPatternMatcher import IPatternMatcher
+from codegrep.pattern_matching.contracts.models import (
+    LineMatch,
+    MatchSpan,
+    PatternMatchResult,
+)
 
 
 class RegexPatternMatcher(IPatternMatcher):
